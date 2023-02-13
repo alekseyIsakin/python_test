@@ -16,6 +16,7 @@ sock = U.UdpComms(udpIP="127.0.0.1", portTX=8000, portRX=8001, enableRX=True, su
 
 i = 0
 print("Server has been started")
+
 sock.SendData("Server has been started") # Send this string to other application
 
 while True:
@@ -24,5 +25,9 @@ while True:
 
     if data != None: # if NEW data has been received since last ReadReceivedData function call
         print(data) # print new received data
-    sock.SendData(str(i))
-    time.sleep(1)
+        data = data.replace('\u200b','')
+        if data == 'map':
+            print('received map') # print new received data
+            with open(r'mods/test/map.mp','br') as f:
+                sock.SendDataBytes(f.read())
+    time.sleep(.33)

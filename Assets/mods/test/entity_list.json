@@ -1,0 +1,17 @@
+{
+  "SEPARATE":0,
+  "INFO":[1,2,3],
+  "FLOOR":[10,9,8],
+  "WALL":[15,14,13],
+
+  "map":"0x01",
+  "endline":"0x13",
+  "endfloor":"0x22",
+  
+  "floor": {
+    "floor": "0xd0"
+  },
+  "walls":{
+    "simple_wall": "0xf0"
+  }
+}

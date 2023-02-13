@@ -20,9 +20,16 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Diagnostics;
-using System.Net.Http;
-using Unity.VisualScripting;
+using System.Collections.Generic;
+
+public class MapInfoEventArgs : EventArgs
+{
+    public byte[] data { get; }
+    public MapInfoEventArgs(byte[] data)
+    {
+        this.data = data;
+    }
+}
 
 public class UdpSocket : MonoBehaviour
 {
@@ -37,8 +44,16 @@ public class UdpSocket : MonoBehaviour
     // Create necessary UdpClient objects
     UdpClient client;
     IPEndPoint remoteEndPoint;
-    Thread receiveThread; // Receiving Thread
-    //Process pythonServer;
+    Thread receiveThread;
+
+
+
+    public delegate void dataProceed(MapInfoEventArgs mapInfo);
+    public event dataProceed receiveMapInfo;
+
+    private Dictionary <string, dataProceed> dataFunctions;
+
+    
 
     public void SendData(byte[] data) // Use to send data to Python
     {
@@ -70,11 +85,6 @@ public class UdpSocket : MonoBehaviour
 
     public void RunServer()
     {
-        //pythonServer = new();
-        //pythonServer.StartInfo.FileName = Application.dataPath + "/venv/scripts/python.exe";
-        //pythonServer.StartInfo.Arguments = Application.dataPath + "/server.py";
-        //pythonServer.Start();
-
         // Create remote endpoint (to Matlab) 
         remoteEndPoint = new IPEndPoint(IPAddress.Parse(IP), txPort);
 
@@ -100,10 +110,8 @@ public class UdpSocket : MonoBehaviour
             {
                 IPEndPoint anyIP = new IPEndPoint(IPAddress.Any, 0);
                 byte[] data = client.Receive(ref anyIP);
-                string text = Encoding.UTF8.GetString(data);
-                print(">> " + text);
 
-                ProcessInput(text);
+                newDataReceive(data);
             }
             catch (Exception err)
             {
@@ -111,16 +119,15 @@ public class UdpSocket : MonoBehaviour
             }
         }
     }
-
-    private void ProcessInput(string input)
+    private void newDataReceive(byte[] data)
     {
-        // PROCESS INPUT RECEIVED STRING HERE
+        print($"received {data.Length} bytes");
 
-        if (!isTxStarted) // First data arrived so tx started
-        {
-            isTxStarted = true;
-        }
+        receiveMapInfo.Invoke(new MapInfoEventArgs(data));
     }
+
+
+
 
     //Prevent crashes - close clients and threads properly!
     void OnDisable()
@@ -132,7 +139,6 @@ public class UdpSocket : MonoBehaviour
     {
         if (receiveThread != null)
             receiveThread.Abort();
-        receiveThread = null;
 
         client.Close();
         client = null;
