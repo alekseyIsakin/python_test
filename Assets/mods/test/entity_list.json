@@ -4,14 +4,20 @@
   "FLOOR":[10,9,8],
   "WALL":[15,14,13],
 
-  "map":"0x01",
-  "endline":"0x13",
-  "endfloor":"0x22",
-  
+  "map":17,
+  "endline":18,
+  "endfloor":19,
+  "endmap":20,
+
   "floor": {
-    "floor": "0xd0"
+    "floor": 129
   },
   "walls":{
-    "simple_wall": "0xf0"
-  }
+    "simple_wall": 209
+  },
+
+  "BOT":32,
+  "BOTID":33,
+  "BOTSTART":34,
+  "ENDBOT":35
 }

@@ -22,10 +22,10 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Collections.Generic;
 
-public class MapInfoEventArgs : EventArgs
+public class NewDataEventArgs : EventArgs
 {
     public byte[] data { get; }
-    public MapInfoEventArgs(byte[] data)
+    public NewDataEventArgs(byte[] data)
     {
         this.data = data;
     }
@@ -48,12 +48,9 @@ public class UdpSocket : MonoBehaviour
 
 
 
-    public delegate void dataProceed(MapInfoEventArgs mapInfo);
-    public event dataProceed receiveMapInfo;
+    public delegate void dataProceed(NewDataEventArgs mapInfo);
+    public event dataProceed receiveData;
 
-    private Dictionary <string, dataProceed> dataFunctions;
-
-    
 
     public void SendData(byte[] data) // Use to send data to Python
     {
@@ -106,27 +103,35 @@ public class UdpSocket : MonoBehaviour
     {
         while (true)
         {
+            byte[] data = null;
             try
             {
                 IPEndPoint anyIP = new IPEndPoint(IPAddress.Any, 0);
-                byte[] data = client.Receive(ref anyIP);
-
-                newDataReceive(data);
+                data = client.Receive(ref anyIP);
             }
             catch (Exception err)
             {
                 print(err.ToString());
             }
+
+            if (data != null) 
+                newDataReceive(data);
         }
     }
     private void newDataReceive(byte[] data)
     {
         print($"received {data.Length} bytes");
-
-        receiveMapInfo.Invoke(new MapInfoEventArgs(data));
+        receiveData.Invoke(new NewDataEventArgs(data));
     }
 
-
+    public void CloseConnect()
+    {
+        SendData("map close");
+    }
+    public void Acknowledge()
+    {
+        SendData("map received");
+    }
 
 
     //Prevent crashes - close clients and threads properly!
@@ -137,6 +142,8 @@ public class UdpSocket : MonoBehaviour
 
     public void StopServer()
     {
+        CloseConnect();
+
         if (receiveThread != null)
             receiveThread.Abort();
 

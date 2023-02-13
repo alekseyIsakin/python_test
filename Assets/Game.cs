@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using UnityEditor.U2D.Path;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -21,7 +22,13 @@ public class Game : MonoBehaviour
                 InputLevel = obj.GetComponent<TMP_Text>();
         }
 
-        udpSocket.receiveMapInfo += (e) => { mapBuilder.build_map(e.data); };
+        udpSocket.receiveData += (e) => {
+            if (mapBuilder.IsMap(e.data))
+            {
+                mapBuilder.RebuildMap(e.data);
+                udpSocket.SendData("map received");
+            }
+        };
     }
 
     public void RunServer()
