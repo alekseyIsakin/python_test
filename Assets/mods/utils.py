@@ -31,18 +31,15 @@ def create_test_map():
               cell = js['floor']['floor']
           mp[floor][h].append(cell)
 
-    pass
-
   with open(r'mods/test/map.mp','bw') as f:
     f.write(bytearray([js['map']]))
+    f.write((max_h).to_bytes(length=4,byteorder='little',signed = False))
+    f.write((max_w).to_bytes(length=4,byteorder='little',signed = False))
+    f.write((cnt_floor).to_bytes(length=4,byteorder='little',signed = False))
+
     for floor in range(cnt_floor):
       for h in range(max_h):
         f.write(bytearray(mp[floor][h]))
-
-        endline = js['endline']
-        f.write(bytes([(endline)]))
-
-      f.write(bytes([(js['endfloor'])]))
     f.write(bytes([(js['endmap'])]))
 
     f.write(bytes([(js['BOT'])]))
@@ -59,7 +56,6 @@ def create_test_map():
     f.write((13).to_bytes(length=4,byteorder='little',signed = False))
     f.write((0).to_bytes(length=4,byteorder='little',signed = False))
     f.write((2).to_bytes(length=4,byteorder='little',signed = False))
-
     f.write(bytes([(js['ENDBOT'])]))
 
 create_test_map()

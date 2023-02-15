@@ -10,7 +10,11 @@
 
 import UdpComms as U
 import time
-from enum import Enum
+import json
+
+js = {}
+with open(r'mods/test/entity_list.json','r') as f:
+    js = json.loads(''.join(f.readlines()))
 
 # Create UDP socket to use for sending (and receiving)
 sock = U.UdpComms(udpIP="127.0.0.1", portTX=8000, portRX=8001,
@@ -20,6 +24,7 @@ map_request = 'map'
 map_acknowledge = 'map received'
 map_close = 'map close'
 step = 'step'
+send_bots = 'new state'
 
 
 
@@ -29,13 +34,10 @@ print("Server has been started")
 sock.SendData("Server has been started")
 
 
-class STAT(Enum):
-    EMPTY = 1
-    START_SESSION = 2
-    MAP_REQUEST = 3
-    NEW_STEP = 4
-    END_SESSION = 5
-
+class Bot():
+    def __init__(s, ID, pos):
+        s.id = ID
+        s.pos = pos
 
 class AbstractState():
     def check_msg(s, msg):
@@ -44,13 +46,14 @@ class AbstractState():
         raise BaseException("Unrealized function")
 
 
+
 class WaitForConnect(AbstractState):
     def check_msg(s, msg):
         
         if msg == None: return s
-        print(f'[{msg}]')
+        print(f'[{msg}]    ')
         print(f'| |       |')
-        print(f'|\./      | ')
+        print(f'|\./      |')
         if msg == map_request:
             return OpenConnection()
         return s
@@ -64,13 +67,14 @@ class OpenConnection(AbstractState):
         s.start = 0
         s.resend_time = 5
         s.try_cnt = 5
+        s.sended_map = bytes()
 
     def check_msg(s, msg):
         if s.try_cnt <= 0:
             return ClosingConnection()
 
         if msg == map_acknowledge:
-            return StepProcessor()
+            return StepProcessor(s.sended_map)
         return s
     
     def do_job(s):
@@ -81,20 +85,49 @@ class OpenConnection(AbstractState):
     
     def sendMap(s, map):
         with open(r'mods/test/map.mp', 'br') as f:
-            sock.SendDataBytes(f.read())
+            bt = f.read()
+            sock.SendDataBytes(bt)
+            s.sended_map = bt
             print('|/`\         |')
             print('| |  send map|')
 
 
 
 class StepProcessor(AbstractState):
+    def __init__(s, bt_map):
+        cursor = 1
+
+        h = int.from_bytes(bt_map[cursor+0:cursor+4], byteorder='little',signed = False)
+        w = int.from_bytes(bt_map[cursor+4:cursor+8], byteorder='little',signed = False)
+        f = int.from_bytes(bt_map[cursor+8:cursor+12], byteorder='little',signed = False)
+        cursor += 12 + h*w*f
+
+        s.bots = []
+        cursor += 1
+
+        if(bt_map[cursor] == js['BOT']):
+            cursor += 1
+            while (cursor < len(bt_map)):
+                cursor += 1
+                ID = int.from_bytes(bt_map[cursor+0:cursor+4], byteorder='little',signed = False)
+                cursor += 1
+                x = int.from_bytes(bt_map[cursor+4:cursor+8], byteorder='little',signed = False)
+                y = int.from_bytes(bt_map[cursor+8:cursor+12], byteorder='little',signed = False)
+                z = int.from_bytes(bt_map[cursor+12:cursor+16], byteorder='little',signed = False)
+                s.bots.append(Bot(ID,[x,y,z]))
+                cursor += 16
+                if bt_map[cursor] == js['ENDBOT']:
+                    break
+
+        s._map = bt_map
+
     def check_msg(s, msg):
         if msg == map_request or msg == map_close:
             return ClosingConnection()
         return s
     
     def do_job(s):
-        sock.SendData(step)
+        sock.SendData(send_bots)
         pass
 
 

@@ -46,7 +46,7 @@ public class MapBuilder : MonoBehaviour
         MapBuilder.NEWLINE = (byte)map_def.GetValue("endline");
         MapBuilder.NEWFLOOR = (byte)map_def.GetValue("endfloor");
         MapBuilder.ENDMAP = (byte)map_def.GetValue("endmap");
-        
+
         MapBuilder.BOT_SECTION = (byte)map_def.GetValue("BOT");
         MapBuilder.BOT_ID = (byte)map_def.GetValue("BOTID");
         MapBuilder.BOT_START = (byte)map_def.GetValue("BOTSTART");
@@ -76,13 +76,13 @@ public class MapBuilder : MonoBehaviour
             throw new Exception($"Not a bot [{data[cursor]}]");
         cursor += 1;
 
-        while (cursor < data.Length )
+        while (cursor < data.Length)
         {
             if (data[cursor] == BOT_END_SECTION)
                 break;
 
             if (data[cursor] != BOT_ID)
-                    throw new Exception($"Bad bot id [{cursor}]=>[{data[cursor]}]");
+                throw new Exception($"Bad bot id [{cursor}]=>[{data[cursor]}]");
             cursor += 1;
 
             byte[] value = data.Skip(cursor).Take(4).ToArray();
@@ -114,48 +114,45 @@ public class MapBuilder : MonoBehaviour
     }
     protected void buildMap(byte[] data)
     {
-        int i = 0;
+        int cursor = 1;
 
-        for (i = 0; i< data.Length; i++)
+        var value = data.Skip(cursor).Take(4).ToArray();
+        int height = BitConverter.ToInt32(value);
+        cursor += 4;
+
+        value = data.Skip(cursor).Take(4).ToArray();
+        int width = BitConverter.ToInt32(value);
+        cursor += 4;
+
+        value = data.Skip(cursor).Take(4).ToArray();
+        int floor = BitConverter.ToInt32(value);
+        cursor += 4;
+
+        for (int f = 0; f < floor; f++)
         {
-            byte b = data[i];
-            int first = b >> 4;
+            for (int h = 0; h < height; h++)
+            {
+                for (int w = 0; w < width; w++)
+                {
+                    int first = data[cursor] >> 4;
 
-            if (b == SEPARATE_BYTE)
-            {
-                position.x += cellSize.x;
-                continue;
-            }
-            if (FLOOR_BYTES.Contains((byte)first))
-            {
-                placeFloor(position);
-                position.x += cellSize.x;
-            }
-            if (WALL_BYTES.Contains((byte)first))
-            {
-                placeWall(position);
-                position.x += cellSize.x;
-            }
-            if (INFO_BYTES.Contains((byte)first))
-            {
-                if (b == NEWLINE)
-                {
-                    position.z += cellSize.z;
-                    position.x = 0;
+                    if (FLOOR_BYTES.Contains((byte)first))
+                        placeFloor(position);
+                    if (WALL_BYTES.Contains((byte)first))
+                        placeWall(position);
+                    position.x += cellSize.x;
+                    cursor++;
                 }
-                if (b == NEWFLOOR)
-                {
-                    position.y += cellSize.y;
-                    position.x = 0;
-                    position.z = 0;
-                }
-                if (b == ENDMAP)
-                    break;
-                continue;
+                position.z += cellSize.z;
+                position.x = 0;
             }
+            position.y += cellSize.y;
+            position.x = 0;
+            position.z = 0;
         }
 
-        loadBots(data, ++i);
+        Application.Quit();
+        loadBots(data, ++cursor);
     }
 
     private void placeWall(Vector3 position)
