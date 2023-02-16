@@ -141,16 +141,15 @@ class StepProcessor(AbstractState):
                 path.append(rnd.randint(2,13))
             
             bot = bytearray()
+            bot.extend(bytes([js["BOTID"]]),)
+            bot.extend(SimpleByteConverter.toByteArray(b.id))
+            bot.extend(bytes([js["BOTPATH"]]))
+            bot.extend(SimpleByteConverter.toByteArray(len(path)))
             
-            bot.append(bytes([js["BOTID"]]))
-            bot.append(SimpleByteConverter.toByteArray(b.ID))
-            bot.append(bytes([js["BOTPATH"]]))
-            
-            len(path)
             bots_dt.append()
 
     def do_job(s):
-        sock.SendData(send_bots)
+        sock.SendData(s.get_bots_data())
         pass
 
 
