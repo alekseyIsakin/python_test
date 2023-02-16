@@ -19,5 +19,6 @@
   "BOT":32,
   "BOTID":33,
   "BOTSTART":34,
-  "ENDBOT":35
+  "BOTPATH":35,
+  "ENDBOT":36
 }

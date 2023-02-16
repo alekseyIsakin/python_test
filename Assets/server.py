@@ -11,7 +11,7 @@
 import UdpComms as U
 import time
 import json
-
+import random as rnd
 js = {}
 with open(r'mods/test/entity_list.json','r') as f:
     js = json.loads(''.join(f.readlines()))
@@ -32,6 +32,12 @@ print("Server has been started")
 
 # Send this string to other application
 sock.SendData("Server has been started")
+
+class SimpleByteConverter:
+    def toByteArray(value:int, bite=4) -> bytearray:
+        return value.to_bytes(length=bite,byteorder='little',signed = False)
+    def fromByteArray(value:bytearray) -> int:
+        return int.from_bytes(value, byteorder='little',signed = False)
 
 
 class Bot():
@@ -126,6 +132,23 @@ class StepProcessor(AbstractState):
             return ClosingConnection()
         return s
     
+    def get_bots_data(s) -> bytearray:
+        bots_dt = bytearray()
+        for b in s.bots:
+            path = []
+            for i in range(4):
+                path.append(rnd.randint(2,13))
+                path.append(rnd.randint(2,13))
+            
+            bot = bytearray()
+            
+            bot.append(bytes([js["BOTID"]]))
+            bot.append(SimpleByteConverter.toByteArray(b.ID))
+            bot.append(bytes([js["BOTPATH"]]))
+            
+            len(path)
+            bots_dt.append()
+
     def do_job(s):
         sock.SendData(send_bots)
         pass
